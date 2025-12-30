@@ -8,8 +8,12 @@ export default defineConfig({
   cacheDir: '../../node_modules/.vite/apps/web',
 
   server: {
-    port: 7200,
+    port: 8004,
     host: 'localhost',
+    cors: {
+      origin: 'http://localhost:5173',
+      credentials: true
+    }
   },
 
   preview: {

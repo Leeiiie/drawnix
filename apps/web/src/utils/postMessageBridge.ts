@@ -4,7 +4,7 @@
  */
 
 export interface MessageToDrawnix {
-  type: 'INIT' | 'LOAD_DATA' | 'GET_DATA' | 'CLEAR';
+  type: 'INIT' | 'LOAD_DATA' | 'GET_DATA' | 'CLEAR' | 'EXPORT_IMAGE';
   requestId: string;
   data?: {
     children: any[];
@@ -16,16 +16,25 @@ export interface MessageToDrawnix {
     theme?: {
       colorMode?: 'light' | 'dark';
     };
+    // EXPORT_IMAGE 请求的导出选项
+    exportOptions?: {
+      format: 'svg' | 'png';
+      scale?: number;  // 缩放比例，默认 2
+      maxWidth?: number; // 最大宽度限制（用于预览图）
+    };
   };
 }
 
 export interface MessageFromDrawnix {
-  type: 'READY' | 'DATA_LOADED' | 'DATA_CHANGED' | 'DATA_RESPONSE' | 'ERROR';
+  type: 'READY' | 'DATA_LOADED' | 'DATA_CHANGED' | 'DATA_RESPONSE' | 'EXPORT_RESPONSE' | 'ERROR';
   requestId?: string;
   data?: {
     children: any[];
     viewport?: any;
     theme?: any;
+    // EXPORT_RESPONSE 返回的图片数据
+    image?: string;  // base64 或 SVG 字符串
+    format?: 'svg' | 'png';
   };
   error?: string;
 }

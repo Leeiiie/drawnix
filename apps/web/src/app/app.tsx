@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawnix } from '@drawnix/drawnix';
-import { PlaitBoard, PlaitElement, PlaitTheme, Viewport, BoardTransforms } from '@plait/core';
+import { PlaitBoard, PlaitElement, PlaitTheme, Viewport, BoardTransforms, toImage, toSvgData } from '@plait/core';
 import { 
   MessageToDrawnix, 
   setupMessageListener, 
@@ -85,6 +85,73 @@ export function App() {
           requestId: message.requestId,
           data: { children: [] }
         });
+        break;
+
+      case 'EXPORT_IMAGE':
+        if (boardRef.current) {
+          // 默认提高缩放比例到 3 以保证清晰度
+          const { format = 'png', scale = 3 } = message.data?.exportOptions || {};
+          console.log('[App] 导出图片:', format, 'scale:', scale);
+          
+          if (format === 'svg') {
+            // 导出 SVG
+            toSvgData(boardRef.current, {
+              fillStyle: 'white',
+              padding: 20,
+              ratio: scale,
+              inlineStyleClassNames: '.plait-text-container',
+              styleNames: ['position'],
+            }).then((svgData) => {
+              sendMessageToParent({
+                type: 'EXPORT_RESPONSE',
+                requestId: message.requestId,
+                data: { image: svgData, format: 'svg' }
+              });
+            }).catch((err) => {
+              console.error('[App] SVG 导出失败:', err);
+              sendMessageToParent({
+                type: 'ERROR',
+                requestId: message.requestId,
+                error: 'SVG 导出失败: ' + err.message
+              });
+            });
+          } else {
+            // 导出 PNG (base64)
+            toImage(boardRef.current, {
+              fillStyle: 'white',
+              padding: 20,
+              ratio: scale,
+              inlineStyleClassNames: '.extend,.emojis,.text',
+            }).then((imageData) => {
+              if (imageData) {
+                sendMessageToParent({
+                  type: 'EXPORT_RESPONSE',
+                  requestId: message.requestId,
+                  data: { image: imageData, format: 'png' }
+                });
+              } else {
+                sendMessageToParent({
+                  type: 'ERROR',
+                  requestId: message.requestId,
+                  error: '图片导出结果为空'
+                });
+              }
+            }).catch((err) => {
+              console.error('[App] PNG 导出失败:', err);
+              sendMessageToParent({
+                type: 'ERROR',
+                requestId: message.requestId,
+                error: 'PNG 导出失败: ' + err.message
+              });
+            });
+          }
+        } else {
+          sendMessageToParent({
+            type: 'ERROR',
+            requestId: message.requestId,
+            error: 'Board 未初始化'
+          });
+        }
         break;
 
       default:
